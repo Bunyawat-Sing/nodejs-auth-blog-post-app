@@ -3,6 +3,7 @@ import { db } from "../utils/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import protect from "../middlewares/protect.js";
 
 dotenv.config();
 
@@ -59,13 +60,13 @@ authRouter.post("/login", async (req, res) => {
     // Check if the user exists
     const user = await db.collection("users").findOne({ username });
     if (!user) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "User not found" });
     }
 
     // Check if the password is correct
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
     // Generate JWT token
@@ -75,13 +76,19 @@ authRouter.post("/login", async (req, res) => {
       { expiresIn: "900000" }
     );
 
+    // Remove password from user object before sending
+    const { password: _, ...userWithoutPassword } = user;
+
     res.json({
       message: "Login successful",
       token: token,
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error("Error during login:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 });
 
