@@ -3,7 +3,6 @@ import { db } from "../utils/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import protect from "../middlewares/protect.js";
 
 dotenv.config();
 

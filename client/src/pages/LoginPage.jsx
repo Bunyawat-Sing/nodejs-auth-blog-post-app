@@ -1,26 +1,27 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/authentication";
+import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const { login, state } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // 🐨 Todo: Exercise #4
-    //  นำ Function `login` ใน AuthContext มา Execute ใน Event Handler ตรงนี้
     try {
       const success = await login(username, password);
       if (success) {
-        // Login successful, you might want to redirect the user or show a success message
         console.log("Login successful");
+        navigate("/"); // Redirect to home page or dashboard
       } else {
-        // Login failed, you might want to show an error message
         console.log("Login failed");
+        // Show error message to user
       }
     } catch (error) {
       console.error("An error occurred during login:", error);
+      // Show error message to user
     }
   };
 
@@ -63,6 +64,7 @@ function LoginPage() {
           <button type="submit">Login</button>
         </div>
       </form>
+      {state.error && <p className="error-message">{state.error}</p>}
     </div>
   );
 }

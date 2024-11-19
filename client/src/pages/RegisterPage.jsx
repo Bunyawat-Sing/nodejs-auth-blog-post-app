@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/authentication";
+import { useNavigate } from "react-router-dom";
 
 function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -7,25 +8,41 @@ function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const { register } = useAuth();
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("");
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // 🐨 Todo: Exercise #2
-    // นำ Function `register` ใน AuthContext มา Execute ใน Event Handler ตรงนี้
     try {
       const success = await register(username, password, firstName, lastName);
       if (success) {
-        // Registration successful, you might want to redirect the user or show a success message
-        console.log("Registration successful");
+        setPopupMessage("Registration successful!");
+        setPopupType("success");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
-        // Registration failed, you might want to show an error message
-        console.log("Registration failed");
+        setPopupMessage("Registration failed. Please try again.");
+        setPopupType("error");
       }
     } catch (error) {
       console.error("An error occurred during registration:", error);
+      setPopupMessage("An error occurred. Please try again.");
+      setPopupType("error");
     }
+    setIsPopupVisible(true);
   };
 
+  useEffect(() => {
+    if (isPopupVisible) {
+      const timer = setTimeout(() => {
+        setIsPopupVisible(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isPopupVisible]);
   return (
     <div className="register-form-container">
       <form className="register-form" onSubmit={handleSubmit}>
@@ -42,7 +59,8 @@ function RegisterPage() {
                 setUsername(event.target.value);
               }}
               value={username}
-              autoComplete="username" // Add this line
+              autoComplete="username"
+              required
             />
           </label>
         </div>
@@ -52,13 +70,14 @@ function RegisterPage() {
             <input
               id="password"
               name="password"
-              type="password" // Change this to password type
+              type="password"
               placeholder="Enter password here"
               onChange={(event) => {
                 setPassword(event.target.value);
               }}
               value={password}
-              autoComplete="new-password" // Add this line
+              autoComplete="new-password"
+              required
             />
           </label>
         </div>
@@ -74,7 +93,8 @@ function RegisterPage() {
                 setFirstName(event.target.value);
               }}
               value={firstName}
-              autoComplete="given-name" // Add this line
+              autoComplete="given-name"
+              required
             />
           </label>
         </div>
@@ -90,7 +110,8 @@ function RegisterPage() {
                 setLastName(event.target.value);
               }}
               value={lastName}
-              autoComplete="family-name" // Add this line
+              autoComplete="family-name"
+              required
             />
           </label>
         </div>
@@ -98,6 +119,18 @@ function RegisterPage() {
           <button type="submit">Submit</button>
         </div>
       </form>
+      {isPopupVisible && (
+        <div
+          className={`
+            fixed bottom-10 right-10 px-4 py-2 rounded-md text-white
+            ${popupType === "success" ? "bg-green-500" : "bg-red-500"}
+            transition-all duration-500 ease-in-out
+            transform ${isPopupVisible ? "translate-y-0" : "translate-y-full"}
+          `}
+        >
+          {popupMessage}
+        </div>
+      )}
     </div>
   );
 }

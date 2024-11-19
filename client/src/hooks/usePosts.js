@@ -1,102 +1,84 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/authentication";
 
 const usePosts = () => {
   const navigate = useNavigate();
+  const { getToken } = useAuth();
   const [posts, setPosts] = useState([]);
   const [post, setPost] = useState(null);
   const [totalPages, setTotalPages] = useState(0);
-  const [isError, setIsError] = useState(null);
-  const [isLoading, setIsLoading] = useState(null);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const apiCall = async (method, url, data = null) => {
+    const token = getToken();
+    try {
+      setIsError(false);
+      setIsLoading(true);
+      setErrorMessage("");
+      const response = await axios({
+        method,
+        url: `http://localhost:4000${url}`,
+        data,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setIsLoading(false);
+      return response.data;
+    } catch (error) {
+      setIsError(true);
+      setIsLoading(false);
+      setErrorMessage(error.response?.data?.message || "An error occurred");
+      throw error;
+    }
+  };
 
   const getPosts = async (input) => {
     const { status, keywords, page } = input;
-    try {
-      const params = new URLSearchParams();
-      params.append("status", status);
-      params.append("keywords", keywords);
-      params.append("page", page);
-      setIsError(false);
-      setIsLoading(true);
-      const results = await axios.get(
-        `http://localhost:4000/posts?${params.toString()}`
-      );
-      setPosts(results.data.data);
-      setTotalPages(results.data.total_pages);
-      setIsLoading(false);
-    } catch (error) {
-      setIsError(true);
-      setIsLoading(false);
-    }
+    const params = new URLSearchParams({ status, keywords, page });
+    const result = await apiCall("get", `/posts?${params.toString()}`);
+    setPosts(result.data);
+    setTotalPages(result.total_pages);
   };
-
-  const deletePost = async (postId) => {
-    try {
-      setIsError(false);
-      setIsLoading(true);
-      await axios.delete(`http://localhost:4000/posts/${postId}`);
-      const newPosts = posts.filter((post) => {
-        return post._id !== postId;
-      });
-      setPosts(newPosts);
-      setIsLoading(false);
-    } catch (error) {
-      setIsError(true);
-      setIsLoading(false);
-    }
-  };
-
   const getPostById = async (postId) => {
-    try {
-      setIsError(false);
-      setIsLoading(true);
-      const result = await axios.get(`http://localhost:4000/posts/${postId}`);
-      setPost(result.data.data);
-      setIsLoading(false);
-    } catch (error) {
-      setIsError(true);
-      setIsLoading(false);
-    }
+    const result = await apiCall("get", `/posts/${postId}`);
+    setPost(result.data);
   };
 
   const createPost = async (data) => {
-    try {
-      setIsError(false);
-      setIsLoading(true);
-      await axios.post(`http://localhost:4000/posts`, data);
-      setIsLoading(false);
-      navigate("/");
-    } catch (error) {
-      setIsError(true);
-      setIsLoading(false);
-    }
+    await apiCall("post", "/posts", data);
+    navigate("/");
   };
 
   const updatePostById = async (postId, data) => {
-    try {
-      setIsError(false);
-      setIsLoading(true);
-      await axios.put(`http://localhost:4000/posts/${postId}`, data);
-      setIsLoading(false);
-      navigate("/");
-    } catch (error) {
-      setIsError(true);
-      setIsLoading(false);
-    }
+    await apiCall("put", `/posts/${postId}`, data);
+    navigate("/");
+  };
+
+  const deletePost = async (postId) => {
+    await apiCall("delete", `/posts/${postId}`);
+    const newPosts = posts.filter((post) => post._id !== postId);
+    setPosts(newPosts);
   };
 
   return {
     posts,
-    totalPages,
+    setPosts,
     post,
+    setPost,
+    totalPages,
+    isError,
+    isLoading,
+    errorMessage,
     getPosts,
     getPostById,
     createPost,
     updatePostById,
     deletePost,
-    isError,
-    isLoading,
   };
 };
 

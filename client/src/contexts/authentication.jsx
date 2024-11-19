@@ -9,13 +9,15 @@ function AuthProvider(props) {
     error: null,
     user: null,
   });
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
 
+  // 🐨 Todo: Exercise #4
+  //  ให้เขียน Logic ของ Function `login` ตรงนี้
+  //  Function `login` ทำหน้าที่สร้าง Request ไปที่ API POST /login
+  //  ที่สร้างไว้ด้านบนพร้อมกับ Body ที่กำหนดไว้ในตารางที่ออกแบบไว้
   const login = async (username, password) => {
-    // 🐨 Todo: Exercise #4
-    //  ให้เขียน Logic ของ Function `login` ตรงนี้
-    //  Function `login` ทำหน้าที่สร้าง Request ไปที่ API POST /login
-    //  ที่สร้างไว้ด้านบนพร้อมกับ Body ที่กำหนดไว้ในตารางที่ออกแบบไว้
-
     try {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
 
@@ -24,7 +26,9 @@ function AuthProvider(props) {
         password,
       });
 
-      if (response.status === 200 && response.data.token) {
+      console.log("Server response:", response.data);
+
+      if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         setState((prevState) => ({
           ...prevState,
@@ -34,15 +38,22 @@ function AuthProvider(props) {
         }));
         return true; // Login successful
       } else {
-        throw new Error("Login failed");
+        console.error("Login failed: No token in response");
+        throw new Error("Login failed: No token in response");
       }
     } catch (error) {
+      console.error(
+        "Login error:",
+        error.response ? error.response.data : error.message
+      );
       setState((prevState) => ({
         ...prevState,
         loading: false,
         user: null,
         error:
-          error.response?.data?.message || "An error occurred during login",
+          error.response?.data?.message ||
+          error.message ||
+          "An error occurred during login",
       }));
       return false; // Login failed
     }
@@ -115,7 +126,7 @@ function AuthProvider(props) {
 
   return (
     <AuthContext.Provider
-      value={{ state, login, logout, register, isAuthenticated }}
+      value={{ state, login, logout, register, isAuthenticated, getToken }}
     >
       {props.children}
     </AuthContext.Provider>
