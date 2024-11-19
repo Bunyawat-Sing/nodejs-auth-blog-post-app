@@ -1,13 +1,14 @@
 import { ObjectId } from "mongodb";
 import { Router } from "express";
 import { db } from "../utils/db.js";
+import protect from "../middlewares/protect.js";
 
 const postRouter = Router();
 
 // 🐨 Todo: Exercise #5
 // นำ Middleware `protect` มาใช้กับ `postRouter` ด้วย Function `app.use`
 
-postRouter.get("/", async (req, res) => {
+postRouter.get("/",protect , async (req, res) => {
   const status = req.query.status;
   const keywords = req.query.keywords;
   const page = req.query.page;
@@ -40,7 +41,7 @@ postRouter.get("/", async (req, res) => {
   });
 });
 
-postRouter.get("/:id", async (req, res) => {
+postRouter.get("/:id",protect, async (req, res) => {
   const postId = ObjectId(req.params.id);
   const collection = db.collection("posts");
   const post = await collection.find({ _id: postId }).toArray();
@@ -49,7 +50,7 @@ postRouter.get("/:id", async (req, res) => {
   });
 });
 
-postRouter.post("/", async (req, res) => {
+postRouter.post("/", protect, async (req, res) => {
   const hasPublished = req.body.status === "published";
   const newPost = {
     ...req.body,
@@ -66,7 +67,7 @@ postRouter.post("/", async (req, res) => {
   });
 });
 
-postRouter.put("/:id", async (req, res) => {
+postRouter.put("/:id", protect, async (req, res) => {
   const hasPublished = req.body.status === "published";
 
   const updatedPost = {
@@ -87,7 +88,7 @@ postRouter.put("/:id", async (req, res) => {
   });
 });
 
-postRouter.delete("/:id", async (req, res) => {
+postRouter.delete("/:id", protect, async (req, res) => {
   const postId = ObjectId(req.params.id);
   const collection = db.collection("posts");
   await collection.deleteOne({ _id: postId });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "./utils/db.js";
+import { db } from "../utils/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -13,23 +13,19 @@ const authRouter = Router();
 authRouter.post("/register", async (req, res) => {
   const { username, password, firstName, lastName } = req.body;
 
-  // Check if all required fields are provided
   if (!username || !password || !firstName || !lastName) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-    // Check if the username already exists
     const existingUser = await db.collection("users").findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: "Username already exists" });
     }
 
-    // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create the new user
     const newUser = {
       username,
       password: hashedPassword,
@@ -37,7 +33,6 @@ authRouter.post("/register", async (req, res) => {
       lastName,
     };
 
-    // Insert the new user into the database
     await db.collection("users").insertOne(newUser);
 
     res.status(201).json({ message: "User has been created successfully" });
